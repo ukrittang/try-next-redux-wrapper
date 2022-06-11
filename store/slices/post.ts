@@ -10,22 +10,29 @@ interface Post {
 }
 
 export const postSlice = createSlice({
-  name: 'subject',
-
-  initialState: { id: 0, userId: 0, title: '', body: '' } as Post,
-
+  name: 'post',
+  initialState: {
+    detail: { id: 0, userId: 0, title: '', body: '' } as Post,
+    list: [] as Post[],
+  },
   reducers: {
     setPost(state, action) {
-      return action.payload;
+      state.detail = action.payload;
+    },
+    setPosts(state, action) {
+      state.list = action.payload;
     },
   },
 
   extraReducers: {
     [HYDRATE]: (state, action) => {
       console.log('HYDRATE', action.payload);
+      if (!action.payload.post) {
+        return state;
+      }
       return {
         ...state,
-        ...action.payload.subject,
+        ...action.payload.post,
       };
     },
   },
@@ -42,6 +49,17 @@ export const fetchPost =
     dispatch(postSlice.actions.setPost(data));
   };
 
+export const fetchPosts = (): AppThunk => async (dispatch) => {
+  const resp = await fetch(`https://jsonplaceholder.typicode.com/posts`);
+  const data = (await resp.json()) as Post[];
+
+  dispatch(postSlice.actions.setPosts(data));
+};
+
 export const selectPost = () => (state: AppState) => {
-  return state?.[postSlice.name];
+  return state?.[postSlice.name].detail;
+};
+
+export const selectPosts = () => (state: AppState) => {
+  return state?.[postSlice.name].list;
 };
